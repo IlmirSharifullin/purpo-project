@@ -10,4 +10,8 @@ dependencies = [
     "langgraph>=1.1.6",
     "langgraph-supervisor>=0.0.31",
     "ollama>=0.6.1",
+    "pydantic-settings>=2.0",
+    "structlog>=24.0",
+    "prometheus-client>=0.20",
+    "langgraph-checkpoint-sqlite>=2.0",
 ]

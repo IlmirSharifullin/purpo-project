@@ -1,9 +1,25 @@
-from langchain_ollama import ChatOllama
-from langchain.tools import tool
+import json
+import sys
+
 from langchain.agents import create_agent
+from langchain.tools import tool
+from langchain_ollama import ChatOllama
 from langgraph_supervisor import create_supervisor
 
-model = ChatOllama(model="qwen2.5:3b")
+from config import settings
+from memory import build_checkpointer, build_run_config, get_store, new_thread_id
+from observability import (
+    ObservabilityCallbackHandler,
+    configure_logging,
+    start_metrics_server,
+)
+
+model = ChatOllama(
+    model=settings.ollama_model,
+    base_url=settings.ollama_host,
+    temperature=settings.ollama_temperature,
+    num_ctx=settings.ollama_num_ctx,
+)
 
 # =============================================================================
 # TOOLS
@@ -302,7 +318,7 @@ def get_cooking_time(dish: str, method: str) -> str:
 
 
 # =============================================================================
-# AGENTS
+# AGENTS  (улучшенные системные промпты)
 # =============================================================================
 
 recipe_finder = create_agent(
@@ -312,10 +328,14 @@ recipe_finder = create_agent(
     system_prompt=(
         "Вы — эксперт по подбору рецептов.\n"
         "Доступные инструменты:\n"
-        "• find_recipe_by_ingredients(ingredients) — ищет рецепты по продуктам из холодильника.\n"
-        "• get_recipe_details(recipe_name) — возвращает полный пошаговый рецепт блюда.\n"
-        "ОБЯЗАТЕЛЬНО вызывайте инструменты для любого запроса о рецептах. "
-        "Никогда не придумывайте рецепты из памяти."
+        "• find_recipe_by_ingredients(ingredients) — ищет рецепты по продуктам.\n"
+        "• get_recipe_details(recipe_name) — возвращает полный пошаговый рецепт.\n\n"
+        "СТРОГИЕ ПРАВИЛА:\n"
+        "1. ВСЕГДА вызывайте инструмент — никогда не придумывайте рецепты из памяти.\n"
+        "2. Отвечайте ТОЛЬКО на вопросы о рецептах и ингредиентах.\n"
+        "3. Вопросы о КБЖУ, времени готовки, заменах — НЕ ваша компетенция.\n"
+        "4. Формат ответа: маркированный список с временем приготовления.\n\n"
+        "Триггеры: «что приготовить из», «рецепт», «как приготовить», «блюда из»."
     ),
 )
 
@@ -327,9 +347,13 @@ nutritionist = create_agent(
         "Вы — диетолог и нутрициолог.\n"
         "Доступные инструменты:\n"
         "• calculate_nutrition(meal, grams) — считает КБЖУ для блюда.\n"
-        "• adjust_diet_for_goal(goal, current_calories) — корректирует рацион под цель.\n"
-        "ОБЯЗАТЕЛЬНО вызывайте инструменты для расчётов. "
-        "Никогда не считайте КБЖУ в уме."
+        "• adjust_diet_for_goal(goal, current_calories) — корректирует рацион под цель.\n\n"
+        "СТРОГИЕ ПРАВИЛА:\n"
+        "1. ВСЕГДА вызывайте инструмент — никогда не считайте КБЖУ в уме.\n"
+        "2. Отвечайте ТОЛЬКО на вопросы о питательной ценности и рационе.\n"
+        "3. Вопросы о рецептах, списках покупок — НЕ ваша компетенция.\n"
+        "4. Формат ответа: чёткие числа с единицами (ккал, г).\n\n"
+        "Триггеры: «калории», «КБЖУ», «белки/жиры/углеводы», «похудеть», «рацион»."
     ),
 )
 
@@ -341,9 +365,13 @@ grocery_list = create_agent(
         "Вы — специалист по составлению списков покупок.\n"
         "Доступные инструменты:\n"
         "• create_weekly_grocery_list(meals_plan) — составляет список покупок на неделю.\n"
-        "• estimate_budget(grocery_list) — оценивает стоимость покупок в рублях.\n"
-        "ОБЯЗАТЕЛЬНО вызывайте инструменты. "
-        "Никогда не составляйте списки из памяти."
+        "• estimate_budget(grocery_list) — оценивает стоимость покупок в рублях.\n\n"
+        "СТРОГИЕ ПРАВИЛА:\n"
+        "1. ВСЕГДА вызывайте инструмент — никогда не составляйте списки из памяти.\n"
+        "2. Отвечайте ТОЛЬКО на вопросы о покупках и бюджете.\n"
+        "3. Вопросы о рецептах, КБЖУ, готовке — НЕ ваша компетенция.\n"
+        "4. Формат ответа: категоризированный список с количествами.\n\n"
+        "Триггеры: «список покупок», «что купить», «бюджет на еду», «стоимость продуктов»."
     ),
 )
 
@@ -355,33 +383,41 @@ cooking_coach = create_agent(
         "Вы — наставник по готовке, помогаете в процессе приготовления.\n"
         "Доступные инструменты:\n"
         "• find_ingredient_substitute(ingredient) — ищет замену ингредиенту.\n"
-        "• get_cooking_time(dish, method) — сообщает время и советы по приготовлению.\n"
-        "ОБЯЗАТЕЛЬНО вызывайте инструменты для любого вопроса о готовке. "
-        "Никогда не отвечайте из памяти."
+        "• get_cooking_time(dish, method) — сообщает время и советы по приготовлению.\n\n"
+        "СТРОГИЕ ПРАВИЛА:\n"
+        "1. ВСЕГДА вызывайте инструмент — никогда не называйте время готовки из памяти.\n"
+        "2. Отвечайте ТОЛЬКО на вопросы о процессе готовки и заменах.\n"
+        "3. Вопросы о рецептах, КБЖУ, покупках — НЕ ваша компетенция.\n"
+        "4. Формат ответа: конкретные числа времени и пропорции для замен.\n\n"
+        "Триггеры: «чем заменить», «сколько варить/жарить/запекать», «как готовить»."
     ),
 )
 
 # =============================================================================
-# SUPERVISOR
+# SUPERVISOR  (усиленный промпт против само-ответов)
 # =============================================================================
 
 supervisor_prompt = (
     "Вы — супервайзер системы планирования питания. В вашем распоряжении 4 специалиста:\n\n"
     "• recipe_finder  → transfer_to_recipe_finder  — рецепты по продуктам, поиск блюд\n"
-    "• nutritionist   → transfer_to_nutritionist   — подсчёт КБЖУ, коррекция рациона под цель\n"
+    "• nutritionist   → transfer_to_nutritionist   — КБЖУ, коррекция рациона под цель\n"
     "• grocery_list   → transfer_to_grocery_list   — список покупок на неделю, бюджет\n"
     "• cooking_coach  → transfer_to_cooking_coach  — замена ингредиентов, время готовки\n\n"
-    "Строгие правила:\n"
-    "1. Вы НИКОГДА не отвечаете самостоятельно — только делегируете нужному специалисту.\n"
-    "2. Каждый под-вопрос в запросе — отдельный вызов соответствующего агента.\n"
+    "АБСОЛЮТНЫЕ ПРАВИЛА (нарушение недопустимо):\n"
+    "1. Вы НИКОГДА не отвечаете на кулинарные вопросы самостоятельно.\n"
+    "   Любые данные (калории, рецепты, цены, время) берутся ТОЛЬКО от специалистов.\n"
+    "2. Каждый под-вопрос в запросе — ОТДЕЛЬНЫЙ вызов соответствующего агента.\n"
     "3. Дождитесь ответа от одного агента, затем вызывайте следующего.\n"
-    "4. Итоговый ответ формируйте только после получения ответов от ВСЕХ нужных агентов.\n\n"
+    "4. Итоговый ответ составляйте ТОЛЬКО после ответов от ВСЕХ нужных агентов.\n"
+    "5. Если запрос содержит несколько тем — вызывайте агентов последовательно.\n\n"
     "Примеры маршрутизации:\n"
-    "• «Что приготовить из курицы?» → recipe_finder\n"
-    "• «Сколько калорий в гречке?» → nutritionist\n"
-    "• «Составь список покупок» → grocery_list\n"
-    "• «Чем заменить яйцо?» → cooking_coach\n"
-    "• Вопрос о рецепте И о КБЖУ → сначала recipe_finder, затем nutritionist"
+    "• «Что приготовить из курицы?» → transfer_to_recipe_finder\n"
+    "• «Сколько калорий в гречке 150г?» → transfer_to_nutritionist\n"
+    "• «Составь список покупок» → transfer_to_grocery_list\n"
+    "• «Чем заменить яйцо? Сколько жарить омлет?» → сначала transfer_to_cooking_coach\n"
+    "• «Рецепт из курицы + КБЖУ куриной грудки» → "
+    "сначала transfer_to_recipe_finder, затем transfer_to_nutritionist\n\n"
+    "ЗАПРЕЩЕНО: отвечать цифрами (калории, граммы, время, рубли) без вызова агента."
 )
 
 workflow = create_supervisor(
@@ -391,25 +427,89 @@ workflow = create_supervisor(
     prompt=supervisor_prompt,
 )
 
-app = workflow.compile()
-
 # =============================================================================
-# TEST
+# BUILD APP WITH MEMORY
 # =============================================================================
 
-result = app.invoke({
-    "messages": [
-        {
-            "role": "user",
-            "content": (
-                "Первый вопрос: Что можно приготовить из курицы и гречки? "
-                "Второй вопрос: Посчитай КБЖУ для куриной грудки 200г."
-            ),
-        }
-    ]
-})
+checkpointer = build_checkpointer()
+app = workflow.compile(checkpointer=checkpointer, store=get_store())
 
-print(result)
-with open("output.json", "w") as f:
-    import json
-    json.dump(result, f, indent=4, ensure_ascii=False, default=str)
+# =============================================================================
+# ENTRYPOINTS
+# =============================================================================
+
+
+def _get_last_assistant_message(result: dict) -> str:
+    """Extract the last non-tool assistant message from graph output."""
+    for msg in reversed(result.get("messages", [])):
+        content = getattr(msg, "content", "") or (
+            msg.get("content", "") if isinstance(msg, dict) else ""
+        )
+        msg_type = type(msg).__name__
+        if content and "Tool" not in msg_type and "transfer" not in str(content).lower():
+            return str(content)
+    return "(нет ответа)"
+
+
+def run_single(user_input: str, thread_id: str | None = None) -> dict:
+    """Run a single invocation (used by evals and non-interactive mode)."""
+    run_cfg = build_run_config(thread_id=thread_id)
+    return app.invoke(
+        {"messages": [{"role": "user", "content": user_input}]},
+        config=run_cfg,
+    )
+
+
+def run_interactive() -> None:
+    """Start an interactive REPL session."""
+    configure_logging()
+    start_metrics_server()
+    handler = ObservabilityCallbackHandler()
+    thread_id = new_thread_id()
+
+    print("=" * 60)
+    print("Кулинарный ассистент готов.")
+    print(f"Сессия: {thread_id}")
+    print(f"Метрики: http://localhost:{settings.metrics_port}/metrics")
+    print("Введите вопрос или 'выход' для завершения.")
+    print("=" * 60)
+
+    while True:
+        try:
+            user_input = input("\nВы: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nЗавершение сессии.")
+            break
+
+        if not user_input:
+            continue
+        if user_input.lower() in ("выход", "exit", "quit", "q"):
+            print("До свидания!")
+            break
+
+        run_cfg = build_run_config(thread_id=thread_id)
+        try:
+            result = app.invoke(
+                {"messages": [{"role": "user", "content": user_input}]},
+                config={**run_cfg, "callbacks": [handler]},
+            )
+            print(f"\nАссистент: {_get_last_assistant_message(result)}")
+        except Exception as exc:
+            print(f"\n[Ошибка]: {exc}")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        # Non-interactive test mode (saves output.json)
+        configure_logging()
+        test_input = (
+            "Первый вопрос: Что можно приготовить из курицы и гречки? "
+            "Второй вопрос: Посчитай КБЖУ для куриной грудки 200г."
+        )
+        result = run_single(test_input)
+        print(_get_last_assistant_message(result))
+        with open("output.json", "w") as f:
+            json.dump(result, f, indent=4, ensure_ascii=False, default=str)
+        print("\n[output.json сохранён]")
+    else:
+        run_interactive()
