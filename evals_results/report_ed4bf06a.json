@@ -1,0 +1,197 @@
+{
+  "run_id": "ed4bf06a",
+  "timestamp": "2026-04-16T09:57:43.160602",
+  "total_cases": 9,
+  "passed": 9,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "avg_score": 0.985,
+  "avg_latency_s": 63.02,
+  "results": [
+    {
+      "case_id": "routing-01",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 50.05,
+      "agents_called": [
+        "recipe_finder",
+        "find_recipe_by_ingredients"
+      ],
+      "tools_called": [
+        "find_recipe_by_ingredients"
+      ],
+      "final_response": "Вот несколько вариантов блюд, которые можно приготовить из гречки и грибов:\n\n1.  **Гречка с грибами**\n    *   **Ингредиенты:** гречка, шампиньоны, лук.\n    *   **Время готовки:** 30 минут.\n\n2.  **Гречневая каша с маслом**\n    *   **Ингредиенты:** гречка, сливочное масло.\n    *   **Время готовки:** 20 минут.\n\n3.  **Гречка по-купечески**\n    *   **Ингредиенты:** гречка, свинина, морковь, лук.\n    *   **Время готовки:** 45 минут.\n\nКакой из этих вариантов вам ближе? Если нужно, я могу помочь с поиск",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:49:06.051508",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "routing-02",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 45.03,
+      "agents_called": [
+        "nutritionist",
+        "calculate_nutrition"
+      ],
+      "tools_called": [
+        "calculate_nutrition"
+      ],
+      "final_response": "В 150 граммах гречки содержится:\n\n• Калории: 514 ккал\n• Белки: 19.5 г\n• Жиры: 5.1 г\n• Углеводы: 102.0 г",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:49:51.078193",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "routing-03",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 90.5,
+      "agents_called": [
+        "grocery_list",
+        "create_weekly_grocery_list",
+        "estimate_budget"
+      ],
+      "tools_called": [
+        "create_weekly_grocery_list",
+        "estimate_budget"
+      ],
+      "final_response": "Вот ваш готовый список покупок на неделю и оценка бюджета:\n\n**Список покупок на неделю:**\n\n**Мясо и рыба:**\n• Куриное филе 1 кг\n• Фарш говяжий 500 г\n\n**Молочные продукты:**\n• Яйца 10 шт\n• Молоко 1 л\n• Творог 400 г\n• Сыр 200 г\n• Сметана 200 г\n\n**Овощи:**\n• Картофель 1 кг\n• Морковь 500 г\n• Лук репчатый 500 г\n• Помидоры 400 г\n• Огурцы 300 г\n\n**Крупы и злаки:**\n• Гречка 500 г\n• Рис 500 г\n• Овсянка 400 г\n• Макароны 400 г\n\n**Прочее:**\n• Масло растительное 0.5 л\n• Масло сливочное 200 г\n• Соль, перец, с",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:51:21.581630",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "routing-04",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 54.18,
+      "agents_called": [
+        "cooking_coach",
+        "find_ingredient_substitute"
+      ],
+      "tools_called": [
+        "find_ingredient_substitute"
+      ],
+      "final_response": "Вот варианты замены сливочного масла в зависимости от задачи:\n\n*   **Растительное масло** — подходит для жарки и выпечки, можно использовать в пропорции 1:1.\n*   **Маргарин** — хорошо подходит для выпечки и запекания, может иметь более мягкую текстуру.\n*   **Пюре авокадо** — отлично для салатов и запекания, добавляет кремовую текстуру.\n\nВыбор замены зависит от того, для чего именно используется масло в рецепте. Если нужно сохранить жирность и вкус — лучше всего подойдет маргарин или растительное",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:52:15.760615",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "routing-05",
+      "passed": true,
+      "score": 0.933,
+      "latency_s": 146.53,
+      "agents_called": [
+        "recipe_finder",
+        "find_recipe_by_ingredients",
+        "nutritionist",
+        "calculate_nutrition"
+      ],
+      "tools_called": [
+        "find_recipe_by_ingredients",
+        "calculate_nutrition"
+      ],
+      "final_response": "Вот ответы на ваши вопросы:\n\n**Что можно приготовить из курицы:**\n• Куриный суп с лапшой — курица, морковь, лук, лапша. Время: 40 мин.\n• Запечённая курица с чесноком — курица, чеснок, оливковое масло. Время: 60 мин.\n• Куриное рагу — курица, картофель, перец, томаты. Время: 50 мин.\n\n**КБЖУ для 200г куриной грудки:**\n• Калории: 330 ккал\n• Белки: 62.0 г\n• Жиры: 7.2 г\n• Углеводы: 0.0 г\n\nВсе темы вашего запроса были обработаны.",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:54:42.291362",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 0.667
+    },
+    {
+      "case_id": "routing-06",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 35.91,
+      "agents_called": [
+        "cooking_coach",
+        "get_cooking_time"
+      ],
+      "tools_called": [
+        "get_cooking_time"
+      ],
+      "final_response": "Время варки куриной грудки: 25–30 минут. Класть в кипящую воду, снимать пену.",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:55:18.203775",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "budget-01",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 44.19,
+      "agents_called": [
+        "grocery_list",
+        "estimate_budget"
+      ],
+      "tools_called": [
+        "estimate_budget"
+      ],
+      "final_response": "Примерный бюджет для стандартного списка продуктов на неделю:\n\n• Мясо и рыба:        ~550 руб.\n• Молочные продукты:  ~540 руб.\n• Овощи и зелень:     ~315 руб.\n• Крупы и злаки:      ~270 руб.\n• Масло и специи:     ~290 руб.\n─────────────────────────────\nИтого:              ~1965 руб./неделю\nВ месяц:            ~7860 руб.",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:56:02.396045",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    },
+    {
+      "case_id": "diet-01",
+      "passed": true,
+      "score": 0.933,
+      "latency_s": 56.87,
+      "agents_called": [
+        "nutritionist",
+        "adjust_diet_for_goal"
+      ],
+      "tools_called": [
+        "adjust_diet_for_goal"
+      ],
+      "final_response": "Для похудения с текущего потребления 2500 ккал вам нужно создать дефицит в 500 ккал, то есть снизить потребление до 2000 ккал в день.\n\nВот основные рекомендации по составу рациона:\n*   **Белки:** 175 г/день (35%) — налегайте на нежирный белок (курица, творог, рыба).\n*   **Жиры:** 56 г/день (25%).\n*   **Углеводы:** 200 г/день (40%).\n\n**Главные советы:**\n*   Добавьте больше овощей в каждый приём пищи.\n*   Исключите сахар и фастфуд.",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:56:59.264502",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 0.667
+    },
+    {
+      "case_id": "grounding-01",
+      "passed": true,
+      "score": 1.0,
+      "latency_s": 43.9,
+      "agents_called": [
+        "nutritionist",
+        "calculate_nutrition"
+      ],
+      "tools_called": [
+        "calculate_nutrition"
+      ],
+      "final_response": "В 100 граммах творога содержится **18.0 г белка**.\n\nПолное КБЖУ для 100 г творога:\n• Калории: 121 ккал\n• Белки: 18.0 г\n• Жиры: 5.0 г\n• Углеводы: 3.0 г",
+      "failures": [],
+      "raw_output": {},
+      "timestamp": "2026-04-16T09:57:43.160510",
+      "routing_score": 1.0,
+      "tool_use_score": 1.0,
+      "content_score": 1.0
+    }
+  ]
+}

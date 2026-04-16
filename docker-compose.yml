@@ -35,6 +35,8 @@ services:
       - LOG_FORMAT=json
       - LOG_LEVEL=INFO
       - METRICS_PORT=8000
+    env_file:
+      - .env
     ports:
       - "8000:8000"      # Prometheus metrics scrape endpoint
     volumes:
@@ -57,6 +59,8 @@ services:
       - METRICS_PORT=8001
       - LOG_FORMAT=json
       - LOG_LEVEL=INFO
+    env_file:
+      - .env
     ports:
       - "8080:8080"      # FastAPI chat UI + API
       - "8001:8001"      # Prometheus metrics scrape endpoint

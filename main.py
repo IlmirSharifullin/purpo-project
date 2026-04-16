@@ -1,5 +1,6 @@
 import json
 import sys
+from pathlib import Path
 
 from langchain.agents import create_agent
 from langchain.tools import tool
@@ -13,6 +14,14 @@ from observability import (
     configure_logging,
     start_metrics_server,
 )
+
+_SKILLS_DIR = Path(__file__).parent / "skills"
+
+
+def _load_skill(name: str) -> str:
+    """Load skills/<name>.md as a system prompt. Returns empty string if missing."""
+    path = _SKILLS_DIR / f"{name}.md"
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 model = ChatOllama(
     model=settings.ollama_model,
@@ -325,72 +334,28 @@ recipe_finder = create_agent(
     model=model,
     tools=[find_recipe_by_ingredients, get_recipe_details],
     name="recipe_finder",
-    system_prompt=(
-        "Вы — эксперт по подбору рецептов.\n"
-        "Доступные инструменты:\n"
-        "• find_recipe_by_ingredients(ingredients) — ищет рецепты по продуктам.\n"
-        "• get_recipe_details(recipe_name) — возвращает полный пошаговый рецепт.\n\n"
-        "СТРОГИЕ ПРАВИЛА:\n"
-        "1. ВСЕГДА вызывайте инструмент — никогда не придумывайте рецепты из памяти.\n"
-        "2. Отвечайте только на свою часть запроса — рецепты и ингредиенты.\n"
-        "   Остальные темы (КБЖУ, время, покупки) игнорируйте: их обработает другой агент.\n"
-        "3. Никогда не пишите «не могу», «не в моей компетенции» — просто дайте рецепт.\n"
-        "4. Формат ответа: маркированный список с временем приготовления."
-    ),
+    system_prompt=_load_skill("recipe_finder"),
 )
 
 nutritionist = create_agent(
     model=model,
     tools=[calculate_nutrition, adjust_diet_for_goal],
     name="nutritionist",
-    system_prompt=(
-        "Вы — диетолог и нутрициолог.\n"
-        "Доступные инструменты:\n"
-        "• calculate_nutrition(meal, grams) — считает КБЖУ для блюда.\n"
-        "• adjust_diet_for_goal(goal, current_calories) — корректирует рацион под цель.\n\n"
-        "СТРОГИЕ ПРАВИЛА:\n"
-        "1. ВСЕГДА вызывайте инструмент — никогда не считайте КБЖУ в уме.\n"
-        "2. Отвечайте только на свою часть запроса — питательная ценность и рацион.\n"
-        "   Остальные темы (рецепты, покупки) игнорируйте: их обработает другой агент.\n"
-        "3. Никогда не пишите «не могу», «не в моей компетенции» — просто дайте КБЖУ.\n"
-        "4. Формат ответа: чёткие числа с единицами (ккал, г)."
-    ),
+    system_prompt=_load_skill("nutritionist"),
 )
 
 grocery_list = create_agent(
     model=model,
     tools=[create_weekly_grocery_list, estimate_budget],
     name="grocery_list",
-    system_prompt=(
-        "Вы — специалист по составлению списков покупок.\n"
-        "Доступные инструменты:\n"
-        "• create_weekly_grocery_list(meals_plan) — составляет список покупок на неделю.\n"
-        "• estimate_budget(grocery_list) — оценивает стоимость покупок в рублях.\n\n"
-        "СТРОГИЕ ПРАВИЛА:\n"
-        "1. ВСЕГДА вызывайте инструмент — никогда не составляйте списки из памяти.\n"
-        "2. Отвечайте только на свою часть запроса — покупки и бюджет.\n"
-        "   Остальные темы (рецепты, КБЖУ) игнорируйте: их обработает другой агент.\n"
-        "3. Никогда не пишите «не могу», «не в моей компетенции» — просто дайте список.\n"
-        "4. Формат ответа: категоризированный список с количествами."
-    ),
+    system_prompt=_load_skill("grocery_list"),
 )
 
 cooking_coach = create_agent(
     model=model,
     tools=[find_ingredient_substitute, get_cooking_time],
     name="cooking_coach",
-    system_prompt=(
-        "Вы — наставник по готовке, помогаете в процессе приготовления.\n"
-        "Доступные инструменты:\n"
-        "• find_ingredient_substitute(ingredient) — ищет замену ингредиенту.\n"
-        "• get_cooking_time(dish, method) — сообщает время и советы по приготовлению.\n\n"
-        "СТРОГИЕ ПРАВИЛА:\n"
-        "1. ВСЕГДА вызывайте инструмент — никогда не называйте время готовки из памяти.\n"
-        "2. Отвечайте только на свою часть запроса — процесс готовки и замены.\n"
-        "   Остальные темы (рецепты, КБЖУ, покупки) игнорируйте: их обработает другой агент.\n"
-        "3. Никогда не пишите «не могу», «не в моей компетенции» — просто дайте ответ.\n"
-        "4. Формат ответа: конкретные числа времени и пропорции для замен."
-    ),
+    system_prompt=_load_skill("cooking_coach"),
 )
 
 # =============================================================================

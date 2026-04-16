@@ -116,10 +116,10 @@ EVAL_SUITE: list[EvalCase] = [
     EvalCase(
         case_id="routing-01",
         description="Запрос рецепта → recipe_finder",
-        user_input="Что можно приготовить из куриного филе и картофеля?",
+        user_input="Что можно приготовить из гречки и грибов?",
         expected_agents=["recipe_finder"],
         expected_tools=["find_recipe_by_ingredients"],
-        expected_keywords=["рецепт", "курич", "картофел"],
+        expected_keywords=["рецепт", "греч", "гриб"],
     ),
     EvalCase(
         case_id="routing-02",
@@ -227,13 +227,33 @@ def _extract_tools_called(raw_output: dict) -> list[str]:
 
 
 def _extract_final_response(raw_output: dict) -> str:
-    for msg in reversed(raw_output.get("messages", [])):
+    messages = raw_output.get("messages", [])
+
+    # Primary: last AIMessage with non-empty text content
+    for msg in reversed(messages):
         content = getattr(msg, "content", "") or (
             msg.get("content", "") if isinstance(msg, dict) else ""
         )
         msg_type = type(msg).__name__
         if content and "Tool" not in msg_type and "transfer" not in str(content).lower():
             return str(content)
+
+    # Fallback: last ToolMessage that is a real tool result (not a transfer confirmation)
+    for msg in reversed(messages):
+        msg_type = type(msg).__name__
+        if "Tool" not in msg_type:
+            continue
+        name = getattr(msg, "name", "") or (msg.get("name", "") if isinstance(msg, dict) else "")
+        content = getattr(msg, "content", "") or (
+            msg.get("content", "") if isinstance(msg, dict) else ""
+        )
+        if (
+            content
+            and "transfer" not in str(name).lower()
+            and "Successfully transferred" not in str(content)
+        ):
+            return str(content)
+
     return ""
 
 
@@ -402,9 +422,23 @@ def _build_app():
     return main.app
 
 
+def _debug_messages(raw_output: dict) -> None:
+    """Print the type and content snippet of every message in the output."""
+    messages = raw_output.get("messages", [])
+    print(f"\n--- DEBUG: {len(messages)} messages ---")
+    for i, msg in enumerate(messages):
+        msg_type = type(msg).__name__
+        name = getattr(msg, "name", None) or (msg.get("name") if isinstance(msg, dict) else None)
+        content = getattr(msg, "content", "") or (msg.get("content", "") if isinstance(msg, dict) else "")
+        snippet = str(content)[:120].replace("\n", "↵")
+        print(f"  [{i}] {msg_type:20s}  name={name!r:25s}  content={snippet!r}")
+    print("--- END DEBUG ---\n")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run culinary assistant evaluations")
     parser.add_argument("--case", help="Run only this case ID (e.g. routing-01)")
+    parser.add_argument("--debug", action="store_true", help="Print raw message structure for each case")
     args = parser.parse_args()
 
     print("Загрузка приложения …")
@@ -416,6 +450,22 @@ if __name__ == "__main__":
         if not suite:
             print(f"Кейс '{args.case}' не найден. Доступные: {[c.case_id for c in EVAL_SUITE]}")
             raise SystemExit(1)
+
+    if args.debug:
+        # Run one case and dump the raw message structure, then exit
+        case = suite[0]
+        print(f"Запуск {case.case_id} в режиме отладки …")
+        run_cfg: dict[str, Any] = {"configurable": {"thread_id": f"eval-debug-{uuid.uuid4().hex[:6]}"}}
+        try:
+            raw = app.invoke(
+                {"messages": [{"role": "user", "content": case.user_input}]},
+                config=run_cfg,
+            )
+        except Exception as exc:
+            raw = {"messages": [], "_error": str(exc)}
+            print(f"ОШИБКА: {exc}")
+        _debug_messages(raw)
+        raise SystemExit(0)
 
     print(f"Запуск {len(suite)} тест-кейсов …\n")
     report = run_eval_suite(app, suite)

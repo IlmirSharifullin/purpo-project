@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     metrics_port: int = 8000
     enable_langsmith: bool = False
     langsmith_project: str = "purpo-culinary"
+    langchain_tracing_v2: bool = False
+    langchain_api_key: str = ""  # Set your LangChain API key here or in the .env file
 
     # Web API
     api_host: str = "0.0.0.0"
