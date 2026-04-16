@@ -44,6 +44,26 @@ services:
     tty: true
     restart: unless-stopped
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: purpo-web
+    command: ["uv", "run", "python", "web/api.py"]
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - OLLAMA_MODEL=qwen3.5:4b
+      - API_PORT=8080
+      - METRICS_PORT=8001
+      - LOG_FORMAT=json
+      - LOG_LEVEL=INFO
+    ports:
+      - "8080:8080"      # FastAPI chat UI + API
+      - "8001:8001"      # Prometheus metrics scrape endpoint
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
   # Optional: Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:latest

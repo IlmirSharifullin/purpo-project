@@ -14,4 +14,6 @@ dependencies = [
     "structlog>=24.0",
     "prometheus-client>=0.20",
     "langgraph-checkpoint-sqlite>=2.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
 ]

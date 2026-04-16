@@ -3,9 +3,14 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
-  - job_name: "culinary_assistant"
+  - job_name: "culinary_cli"
     static_configs:
       - targets: ["app:8000"]
+    metrics_path: /metrics
+
+  - job_name: "culinary_web"
+    static_configs:
+      - targets: ["web:8001"]
     metrics_path: /metrics
 
 alerting:

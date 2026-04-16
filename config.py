@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     enable_langsmith: bool = False
     langsmith_project: str = "purpo-culinary"
 
+    # Web API
+    api_host: str = "0.0.0.0"
+    api_port: int = 8080
+
     # Evals
     evals_output_dir: str = str(BASE_DIR / "evals_results")
 
