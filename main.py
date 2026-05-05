@@ -464,17 +464,17 @@ def run_interactive() -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "--test":
-        # Non-interactive test mode (saves output.json)
-        configure_logging()
-        test_input = (
-            "Первый вопрос: Что можно приготовить из курицы и гречки? "
-            "Второй вопрос: Посчитай КБЖУ для куриной грудки 200г."
-        )
-        result = run_single(test_input)
-        print(_get_last_assistant_message(result))
-        with open("output.json", "w") as f:
-            json.dump(result, f, indent=4, ensure_ascii=False, default=str)
-        print("\n[output.json сохранён]")
-    else:
-        run_interactive()
+    # if len(sys.argv) > 1 and sys.argv[1] == "--test":
+    #     # Non-interactive test mode (saves output.json)
+    #     configure_logging()
+    #     test_input = (
+    #         "Первый вопрос: Что можно приготовить из курицы и гречки? "
+    #         "Второй вопрос: Посчитай КБЖУ для куриной грудки 200г."
+    #     )
+    #     result = run_single(test_input)
+    #     print(_get_last_assistant_message(result))
+    #     with open("output.json", "w") as f:
+    #         json.dump(result, f, indent=4, ensure_ascii=False, default=str)
+    #     print("\n[output.json сохранён]")
+    # else:
+    run_interactive()
